@@ -109,7 +109,6 @@ void stable_counting_comparison_sort(vector<T>& data, bool (*compare)(T i1, T i2
   LinuxEvents<PERF_TYPE_HARDWARE> unified(evts);
   vector<unsigned long long> results;
   results.resize(evts.size());
-  cout << endl;
   unified.start();
 #endif
   auto start1 = NowNanos();
@@ -358,8 +357,22 @@ int main(int argc, char * argv[]) {
         cout << "Oversampling: " << oversampling << endl;
     }
     cout << "Sorting..." << endl;
-    auto start_time = NowNanos();
 
+#ifdef MEASURE
+#ifdef __linux__
+  vector<int> evts;
+  evts.push_back(PERF_COUNT_HW_CPU_CYCLES);
+  evts.push_back(PERF_COUNT_HW_INSTRUCTIONS);
+  evts.push_back(PERF_COUNT_HW_CACHE_MISSES);
+  evts.push_back(PERF_COUNT_HW_BRANCH_MISSES);
+  LinuxEvents<PERF_TYPE_HARDWARE> unified(evts);
+  vector<unsigned long long> results;
+  results.resize(evts.size());
+  unified.start();
+#endif
+#endif
+
+    auto start_time = NowNanos();
     if (algorithm == 0) {
         stable_sort(v.begin(), v.end(), COMPARE);
     } else if (algorithm == 1) {
@@ -371,6 +384,18 @@ int main(int argc, char * argv[]) {
     }
     auto time = NowNanos() - start_time;
     cout << "Time (ns/key): " << (time / size) << endl;
+
+#ifdef MEASURE
+#ifdef __linux__
+  unified.end(results);
+  printf("Cycles: %5.1f/key, instructions: (%5.1f/key, %4.2f/cycle) cache misses: %5.2f/key branch misses: %4.2f/key\n",
+    results[0]*1.0/size,
+    results[1]*1.0/size ,
+    results[1]*1.0/results[0],
+    results[2]*1.0/size,
+    results[3]*1.0/size);
+#endif
+#endif
 
     int duplicates = 0;
     for (int i = 1; i < size; i++) {
