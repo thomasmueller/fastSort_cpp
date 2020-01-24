@@ -88,7 +88,7 @@ const int groups = 256;
 const int oversampling = 64;
 
 template<typename T>
-void stable_counting_comparison_sort(vector<T>& data, bool (*compare)(T i1, T i2)) {
+void stable_sample_sort(vector<T>& data, bool (*compare)(T i1, T i2)) {
 
     // number of elements to sort
     int size = data.size();
@@ -99,7 +99,7 @@ void stable_counting_comparison_sort(vector<T>& data, bool (*compare)(T i1, T i2
         return;
     }
 
-#ifdef MEASURE
+#ifdef MEASURE2
 #ifdef __linux__
   vector<int> evts;
   evts.push_back(PERF_COUNT_HW_CPU_CYCLES);
@@ -131,7 +131,7 @@ void stable_counting_comparison_sort(vector<T>& data, bool (*compare)(T i1, T i2
     // for each entry, we remember in which group it belongs to
     int* pos = new int[size];
 
-#ifdef MEASURE
+#ifdef MEASURE2
   auto time1 = NowNanos() - start1;
   cout << "Time 1 (ns/key): " << (time1 / size) << endl;
   cout << "Comparisons: " << compareCount << endl;
@@ -162,7 +162,7 @@ void stable_counting_comparison_sort(vector<T>& data, bool (*compare)(T i1, T i2
         counts[x]++;
     }
 
-#ifdef MEASURE
+#ifdef MEASURE2
   auto time2 = NowNanos() - start2;
   cout << "Time 2 (ns/key): " << (time2 / size) << endl;
   cout << "Comparisons: " << compareCount << endl;
@@ -199,7 +199,7 @@ void stable_counting_comparison_sort(vector<T>& data, bool (*compare)(T i1, T i2
         d2[--counts[pos[i]]] = data[i];
     }
 
-#ifdef MEASURE
+#ifdef MEASURE2
   auto time3 = NowNanos() - start3;
   cout << "Time 3 (ns/key): " << (time3 / size) << endl;
 #ifdef __linux__
@@ -232,7 +232,7 @@ void stable_counting_comparison_sort(vector<T>& data, bool (*compare)(T i1, T i2
     }
     delete[] counts2;
 
-#ifdef MEASURE
+#ifdef MEASURE2
   auto time4 = NowNanos() - start4;
   cout << "Time 4 (ns/key): " << (time4 / size) << endl;
   cout << "Comparisons: " << compareCount << endl;
@@ -251,7 +251,7 @@ void stable_counting_comparison_sort(vector<T>& data, bool (*compare)(T i1, T i2
 }
 
 template<typename T>
-void counting_comparison_sort(vector<T>& data, bool (*compare)(T i1, T i2)) {
+void sample_sort(vector<T>& data, bool (*compare)(T i1, T i2)) {
     int size = data.size();
     if (size <= groups * oversampling) {
         sort(data.begin(), data.end(), compare);
@@ -300,14 +300,14 @@ int main(int argc, char * argv[]) {
     if (argc > 1) {
         if (strcmp(argv[1], "stable_sort") == 0) {
             algorithm = 0;
-        } else if (strcmp(argv[1], "stable_count") == 0) {
+        } else if (strcmp(argv[1], "stable_sample_sort") == 0) {
             algorithm = 1;
         } else if (strcmp(argv[1], "sort") == 0) {
             algorithm = 2;
-        } else if (strcmp(argv[1], "count") == 0) {
+        } else if (strcmp(argv[1], "sample_sort") == 0) {
             algorithm = 3;
         } else {
-            cout << "Unknown algorithm, supported: stable_sort, stable_count, sort, count: " << argv[1] << endl;
+            cout << "Unknown algorithm, supported: stable_sort, stable_sample_sort, sort, sample_sort: " << argv[1] << endl;
             return 2;
         }
     }
@@ -346,13 +346,13 @@ int main(int argc, char * argv[]) {
     if (algorithm == 0) {
         cout << "Algorithm: stable_sort" << endl;
     } else if (algorithm == 1) {
-        cout << "Algorithm: stable_count" << endl;
+        cout << "Algorithm: stable_sample_sort" << endl;
         cout << "Groups: " << groups << endl;
         cout << "Oversampling: " << oversampling << endl;
     } else if (algorithm == 2) {
         cout << "Algorithm: sort" << endl;
     } else if (algorithm == 3) {
-        cout << "Algorithm: count" << endl;
+        cout << "Algorithm: sample_sort" << endl;
         cout << "Groups: " << groups << endl;
         cout << "Oversampling: " << oversampling << endl;
     }
@@ -376,11 +376,11 @@ int main(int argc, char * argv[]) {
     if (algorithm == 0) {
         stable_sort(v.begin(), v.end(), COMPARE);
     } else if (algorithm == 1) {
-        stable_counting_comparison_sort(v, COMPARE);
+        stable_sample_sort(v, COMPARE);
     } else if (algorithm == 2) {
         sort(v.begin(), v.end(), COMPARE);
     } else if (algorithm == 3) {
-        counting_comparison_sort(v, COMPARE);
+        sample_sort(v, COMPARE);
     }
     auto time = NowNanos() - start_time;
     cout << "Time (ns/key): " << (time / size) << endl;
